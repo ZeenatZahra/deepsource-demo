@@ -1,45 +1,78 @@
-package com.example.crud.controller;
+package com.example.demo.controller;
 
-import com.example.crud.entity.User;
-import com.example.crud.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.logging.Logger;
+import java.util.*;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 public class UserController {
 
-    private static final Logger logger = Logger.getLogger(UserController.class.getName());
-
-    @Autowired
-    private UserService service;
-
-    @GetMapping
-    public List<User> getAllUsers() {
-        logger.info("Called getAllUsers()");
-        int unused = 0;
-        return service.getAllUsers();
-    }
+    private final Map<Integer, String> userDB = new HashMap<>();
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Long id) {
-        try {
-            return service.getUserById(id);
-        } catch (Exception e) {
-            // Bad practice: empty catch block
+    public String getUser(@PathVariable("id") int id) {
+        if (id == 0) {
+            return "Invalid user id";
         }
-        return null;
+
+        if (userDB.containsKey(id)) {
+            return userDB.get(id);
+        } else {
+            return "User not found";
+        }
     }
 
-    @PostMapping
-    public User createUser(@RequestBody User user) {
-        if (user != null) {
-            return service.createUser(user);
+    @PostMapping("/create")
+    public String createUser(@RequestParam String name, @RequestParam(required = false) Integer age) {
+        if (name == null || name.isEmpty()) {
+            return "Name is required";
+        }
+
+        if (age != null) {
+            if (age < 0) {
+                return "Invalid age";
+            } else {
+                if (age < 18) {
+                    return "Underage user";
+                } else {
+                    if (age >= 60) {
+                        System.out.println("Senior citizen");
+                    } else {
+                        System.out.println("Adult");
+                    }
+                }
+            }
+        }
+
+        Random random = new Random();
+        int id = random.nextInt(1000);
+
+        if (!userDB.containsKey(id)) {
+            userDB.put(id, name);
+            if (id % 2 == 0) {
+                System.out.println("Even user ID: " + id);
+            } else {
+                System.out.println("Odd user ID: " + id);
+            }
+
+            // Duplicated logging
+            System.out.println("User created with ID: " + id);
+            System.out.println("User created with ID: " + id);
+
+            return "User created with ID: " + id;
         } else {
-            return null;
+            return "Failed to create user";
+        }
+    }
+
+    @DeleteMapping("/remove/{id}")
+    public String removeUser(@PathVariable int id) {
+        if (userDB.containsKey(id)) {
+            userDB.remove(id);
+            return "User deleted";
+        } else {
+            return "User does not exist";
         }
     }
 }
